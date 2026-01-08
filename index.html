@@ -2,149 +2,116 @@
 <html lang="ml">
 <head>
     <meta charset="UTF-8">
-    <title>കലസ്തീൻ – Arts Fest (Live)</title>
+    <title>കലസ്തീൻ 2026 – Live Results</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        :root { --primary: #4a148c; --secondary: #7b1fa2; --accent: #ffc107; --bg: #f5f6fa; --text: #2f3640; }
+        :root { --primary: #4a148c; --secondary: #7b1fa2; --accent: #ffc107; --bg: #f5f6fa; --text: #2f3640; --success: #27ae60; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #e0e0e0; margin: 0; padding: 10px; color: var(--text); }
-        .container { max-width: 1100px; margin: auto; background: #fff; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        
-        nav { background: var(--primary); padding: 10px; border-radius: 12px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 25px; }
+        .container { max-width: 1100px; margin: auto; background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        nav { background: var(--primary); padding: 10px; border-radius: 12px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 25px; position: sticky; top: 10px; z-index: 100; }
         nav a { color: white; text-decoration: none; font-weight: bold; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: 0.2s; }
         nav a:hover { background: var(--accent); color: var(--primary); }
-
-        .page { display: none; }
+        .page { display: none; animation: fadeIn 0.3s; }
         .page.active { display: block; }
-        
-        .table-wrapper { width: 100%; overflow-x: auto; margin-top: 15px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .table-wrapper { width: 100%; overflow-x: auto; margin-top: 15px; border-radius: 8px; }
         table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th { background: var(--primary); color: white; padding: 12px; font-size: 11px; text-transform: uppercase; }
+        th { background: var(--primary); color: white; padding: 12px; font-size: 12px; }
         td { padding: 10px; text-align: center; border: 1px solid #eee; background: #fff; }
-
-        input, select { padding: 10px; width: 100%; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; margin-bottom: 5px; }
+        input, select { padding: 10px; width: 100%; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 5px; }
         .btn { border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; margin: 5px; transition: 0.3s; }
-        
-        .result-card { border: 2px solid var(--primary); border-radius: 12px; padding: 15px; margin-top: 25px; background: #fdfdfd; page-break-inside: avoid; }
-        .result-card h4 { margin: 0; color: var(--primary); border-bottom: 2px solid var(--accent); display: inline-block; padding-bottom: 5px; }
-        .points-badge { background: var(--accent); color: #000; padding: 10px; font-size: 24px; font-weight: bold; text-align: center; border-radius: 8px; margin: 15px 0; }
-
-        @media print {
-            nav, .no-print, button, .admin-only { display: none !important; }
-            .container { box-shadow: none; width: 100%; padding: 0; margin: 0; }
-            .page { display: none !important; }
-            .page.active { display: block !important; }
-            .print-header { display: block !important; text-align: center; border-bottom: 3px solid #000; margin-bottom: 20px; }
-            .print-footer { display: flex !important; justify-content: space-between; margin-top: 50px; }
-        }
-        .print-header, .print-footer { display: none; }
+        .result-card { border: 2px solid var(--primary); border-radius: 12px; padding: 15px; margin-top: 25px; }
+        .points-badge { background: var(--accent); color: #000; padding: 15px; font-size: 28px; font-weight: bold; text-align: center; border-radius: 8px; margin: 15px 0; }
+        .status-indicator { font-size: 12px; text-align: center; margin-bottom: 10px; color: #666; font-weight: bold; }
+        .live-dot { height: 10px; width: 10px; background-color: #27ae60; border-radius: 50%; display: inline-block; margin-right: 5px; animation: blink 1s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="print-header">
-        <h1 style="margin:0;">PRISTINE VALLEY COLLEGE</h1>
-        <p>Arts & Science College, Pookolathur</p>
-        <h3 id="docTitle">OFFICIAL RESULT SHEET</h3>
+    <div style="text-align: center;">
+        <h1 style="color: var(--primary); margin-bottom: 5px;">കലസ്തീൻ 2026</h1>
+        <div class="status-indicator" id="syncStatus">Syncing with Google Sheets...</div>
     </div>
-
-    <h1 class="no-print" style="text-align:center; color: var(--primary);">കലസ്തീൻ</h1>
     
     <nav class="no-print">
         <a id="nav-entry" style="display:none;" onclick="showPage('home')">ENTRY FORM</a>
         <a onclick="showPage('events')">EVENT LIST</a>
-        <a onclick="showPage('groupTotal')">GROUP SCORE</a>
+        <a onclick="showPage('groupTotal')">LEADERBOARD</a>
         <a onclick="showPage('studentReport')">SEARCH</a>
-        <a onclick="showPage('top10')">TOP 10</a>
-        <a onclick="showPage('allResults')">FULL RESULTS</a>
+        <a onclick="syncFromCloud()" style="background: #2980b9;">REFRESH</a>
         <a id="authBtn" onclick="handleAuth()" style="background:var(--accent); color:black;">ADMIN LOGIN</a>
     </nav>
 
     <div id="home" class="page">
-        <h3 id="formTitle">New Result Entry</h3>
-        <input type="hidden" id="editIndex" value="-1">
+        <h3>Admin: New Result Entry</h3>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
-            <input id="eventName" placeholder="Event Name">
-            <select id="eventType"><option value="individual">Individual</option><option value="group">Group</option></select>
+            <input id="eventName" placeholder="Event Name (e.g. Oppana)">
+            <select id="eventType">
+                <option value="individual">Individual Event</option>
+                <option value="group">Group Event</option>
+            </select>
         </div>
-        <table id="entryTable">
-            <thead><tr><th>Pos</th><th>Reg No</th><th>Name</th><th>Group</th><th>Grade</th><th>Action</th></tr></thead>
-            <tbody id="entryBody"></tbody>
-        </table>
-        <button class="btn" style="background:#2ecc71;" onclick="addRow()">+ Add Row</button>
-        <button class="btn" style="background:var(--primary); width:100%;" onclick="saveEvent()">SAVE OFFICIAL RESULT</button>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Pos (1,2,3)</th><th>Reg No</th><th>Name</th><th>Group</th><th>Grade</th><th>X</th></tr>
+                </thead>
+                <tbody id="entryBody"></tbody>
+            </table>
+        </div>
+        <button class="btn" style="background:var(--success);" onclick="addRow()">+ Add Row</button>
+        <button id="saveBtn" class="btn" style="background:var(--primary); width:100%; margin-top:20px;" onclick="saveEvent()">SAVE & PUBLISH TO CLOUD</button>
     </div>
 
     <div id="events" class="page active">
         <h3>Registered Events</h3>
-        <div class="table-wrapper"><table><thead><tr><th>Event Name</th><th>Actions</th></tr></thead><tbody id="listBody"></tbody></table></div>
-        <button class="btn admin-only" style="display:none; background:red; margin-top:30px;" onclick="clearAllData()">⚠️ CLEAR ALL DATA</button>
+        <div class="table-wrapper">
+            <table>
+                <thead><tr><th>Event Name</th><th>Category</th><th>Details</th></tr></thead>
+                <tbody id="listBody"></tbody>
+            </table>
+        </div>
     </div>
 
     <div id="groupTotal" class="page">
         <h3>Group Standings</h3>
         <div class="table-wrapper"><table id="gtTable"></table></div>
-        <button class="btn no-print" style="background:var(--primary); margin-top:15px;" onclick="preparePrint('Group Standings')">Print Rankings</button>
     </div>
 
     <div id="studentReport" class="page">
-        <h3>Student Search</h3>
-        <div class="no-print" style="text-align:center; margin-bottom:20px;">
-            <input id="stuSearch" placeholder="Reg Number..." style="max-width:300px; display:inline-block;">
+        <h3>Student Result Search</h3>
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <input id="stuSearch" placeholder="Enter Registration Number...">
             <button class="btn" style="background:var(--primary);" onclick="searchStu()">SEARCH</button>
         </div>
         <div id="stuCard" style="display:none;" class="result-card">
             <h2 id="sNameDisplay" style="text-align:center;"></h2>
             <div id="sPointDisplay" class="points-badge"></div>
-            <table id="sResTable" style="width:100%; border-collapse: collapse;"></table>
-        </div>
-    </div>
-
-    <div id="top10" class="page">
-        <h3>Individual Top 10 Performers</h3>
-        <div class="table-wrapper"><table id="topTable"></table></div>
-    </div>
-
-    <div id="allResults" class="page">
-        <div class="no-print" style="display:flex; justify-content: space-between; align-items: center;">
-            <h3>Consolidated Result Gallery</h3>
-            <button class="btn" style="background:#2c3e50;" onclick="preparePrint('Consolidated Results')">Print Full Result</button>
-        </div>
-        <div id="fullGallery"></div>
-    </div>
-
-    <div id="viewPage" class="page">
-        <h2 id="viewTitle" style="text-align:center;"></h2>
-        <div class="table-wrapper"><table id="viewTable"></table></div>
-        <div class="print-footer">
-            <div>_________________<br>Convener</div>
-            <div>_________________<br>Principal</div>
-        </div>
-        <div class="no-print" style="text-align:center; margin-top:20px;">
-            <button class="btn" style="background:#2c3e50;" onclick="window.print()">Print This Result</button>
-            <button class="btn" style="background:#888;" onclick="showPage('events')">Back</button>
+            <table id="sResTable" style="width:100%"></table>
         </div>
     </div>
 </div>
 
 <script>
+    // --- YOUR GOOGLE SCRIPT LINK ---
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwCYV_IWxlvJqGDfNLVuBZAU8hwouxuD5Ng0hGZTqxDzTb1GLQdEM7rDCk_YD1U6LI/exec"; 
     const ADMIN_PASSWORD = "fest2026";
+    
     let isAdmin = false;
-    let events = JSON.parse(localStorage.getItem("arts_fest_data")) || [];
+    let events = [];
 
     function handleAuth() {
         if(!isAdmin) {
-            let p = prompt("Enter Password:");
+            let p = prompt("Enter Admin Password:");
             if(p === ADMIN_PASSWORD) { isAdmin = true; updateAuthUI(); }
-            else { alert("Wrong Password"); }
-        } else { isAdmin = false; updateAuthUI(); showPage('events'); }
+        } else { isAdmin = false; updateAuthUI(); }
     }
 
     function updateAuthUI() {
         document.getElementById("authBtn").innerText = isAdmin ? "LOGOUT" : "ADMIN LOGIN";
-        document.getElementById("authBtn").style.background = isAdmin ? "red" : "var(--accent)";
         document.getElementById("nav-entry").style.display = isAdmin ? "inline-block" : "none";
-        document.querySelectorAll(".admin-only").forEach(el => el.style.display = isAdmin ? "block" : "none");
         render();
     }
 
@@ -160,25 +127,35 @@
         return pts;
     }
 
-    function addRow(data = null) {
-        const b = document.getElementById("entryBody");
-        const r = b.insertRow();
-        r.innerHTML = `
-            <td><select class="p"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></td>
-            <td><input class="r"></td><td><input class="n"></td>
-            <td><select class="g"><option value="">--</option><option>ARTEZUELA</option><option>UGRAN</option><option>COSMIC</option><option>SPARKERS</option></select></td>
-            <td><select class="gr"><option value="">--</option><option>A+</option><option>A</option><option>B</option><option>C</option></select></td>
-            <td><button class="btn" style="background:red; padding:2px 8px;" onclick="this.parentElement.parentElement.remove()">X</button></td>`;
-        if(data) {
-            const i = r.querySelectorAll("input, select");
-            i[0].value = data.pos; i[1].value = data.reg; i[2].value = data.name; i[3].value = data.group; i[4].value = data.grade;
+    async function syncFromCloud() {
+        const status = document.getElementById("syncStatus");
+        status.innerHTML = "⌛ Syncing with Cloud...";
+        try {
+            const res = await fetch(SCRIPT_URL);
+            const data = await res.json();
+            const grouped = {};
+            data.forEach(row => {
+                if(!grouped[row.eventName]) grouped[row.eventName] = { name: row.eventName, type: row.type, items: [] };
+                grouped[row.eventName].items.push(row);
+            });
+            events = Object.values(grouped);
+            render();
+            status.innerHTML = '<span class="live-dot"></span> LIVE FROM GOOGLE SHEETS';
+        } catch (e) {
+            status.innerHTML = "❌ Connection Failed. Please Refresh.";
         }
     }
 
-    function saveEvent() {
-        const name = document.getElementById("eventName").value, type = document.getElementById("eventType").value;
-        const editIdx = parseInt(document.getElementById("editIndex").value);
-        if(!name) return alert("Enter Name");
+    async function saveEvent() {
+        const name = document.getElementById("eventName").value;
+        const type = document.getElementById("eventType").value;
+        const saveBtn = document.getElementById("saveBtn");
+        
+        if(!name) return alert("Please enter Event Name");
+        
+        saveBtn.innerText = "⌛ Publishing...";
+        saveBtn.disabled = true;
+
         let items = [];
         document.querySelectorAll("#entryBody tr").forEach(tr => {
             const reg = tr.querySelector(".r").value;
@@ -191,95 +168,69 @@
                 });
             }
         });
-        if(editIdx === -1) events.push({ name, type, items }); else events[editIdx] = { name, type, items };
-        localStorage.setItem("arts_fest_data", JSON.stringify(events));
-        alert("Saved!"); resetForm(); render(); showPage('events');
+
+        try {
+            // Using POST to send to Google Script
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ name, type, items }) });
+            alert("Published to Cloud Successfully!");
+            resetForm();
+            syncFromCloud();
+            showPage('events');
+        } catch (e) {
+            alert("Error: Check your Internet connection.");
+        } finally {
+            saveBtn.innerText = "SAVE & PUBLISH TO CLOUD";
+            saveBtn.disabled = false;
+        }
     }
 
     function render() {
         const lb = document.getElementById("listBody"); lb.innerHTML = "";
-        let groups = {"ARTEZUELA":0, "UGRAN":0, "COSMIC":0, "SPARKERS":0}, students = {}, gal = document.getElementById("fullGallery");
-        gal.innerHTML = "";
+        let groups = {"ARTEZUELA":0, "UGRAN":0, "COSMIC":0, "SPARKERS":0};
 
-        events.forEach((e, i) => {
-            // List Page
-            let btns = `<button class="btn" style="background:#3498db; font-size:11px;" onclick="viewEvent(${i})">View</button>`;
-            if(isAdmin) {
-                btns += `<button class="btn" style="background:#f39c12; font-size:11px;" onclick="restoreToEntry(${i})">Edit</button>`;
-                btns += `<button class="btn" style="background:#e74c3c; font-size:11px;" onclick="delEvent(${i})">Del</button>`;
-            }
-            lb.innerHTML += `<tr><td>${e.name}</td><td>${btns}</td></tr>`;
-
-            // Full Results Gallery
-            let tableHTML = `<div class="result-card"><h4>${e.name.toUpperCase()}</h4><table><thead><tr><th>Pos</th><th>Reg</th><th>Name</th><th>Group</th><th>Grade</th><th>Pts</th></tr></thead><tbody>`;
-            e.items.forEach(it => {
-                if(it.group) groups[it.group] += it.pts;
-                students[it.reg] = students[it.reg] || { name: it.name, group: it.group, pts: 0 };
-                students[it.reg].pts += it.pts;
-                tableHTML += `<tr><td>${it.pos==0?'--':it.pos}</td><td>${it.reg}</td><td>${it.name}</td><td>${it.group}</td><td>${it.grade}</td><td>${it.pts}</td></tr>`;
-            });
-            gal.innerHTML += tableHTML + `</tbody></table></div>`;
+        events.forEach((e) => {
+            lb.innerHTML += `<tr><td>${e.name}</td><td>${e.type}</td><td><button class="btn" style="background:#3498db" onclick="showPage('studentReport')">View Details</button></td></tr>`;
+            e.items.forEach(it => { if(it.group && groups[it.group] !== undefined) groups[it.group] += parseInt(it.pts); });
         });
 
-        // Group Table
         const gt = document.getElementById("gtTable"); gt.innerHTML = "<tr><th>Rank</th><th>Group</th><th>Points</th></tr>";
         Object.entries(groups).sort((a,b)=>b[1]-a[1]).forEach((g, idx) => {
             gt.innerHTML += `<tr><td>${idx+1}</td><td>${g[0]}</td><td><b>${g[1]}</b></td></tr>`;
         });
+    }
 
-        // Top 10 Table
-        const tt = document.getElementById("topTable"); tt.innerHTML = "<tr><th>Rank</th><th>Name</th><th>Points</th></tr>";
-        Object.entries(students).sort((a,b)=>b[1].pts-a[1].pts).slice(0,10).forEach((s,i) => {
-            tt.innerHTML += `<tr><td>${i+1}</td><td>${s[1].name} (${s[1].group})</td><td><b>${s[1].pts}</b></td></tr>`;
-        });
+    function addRow() {
+        const b = document.getElementById("entryBody");
+        const r = b.insertRow();
+        r.innerHTML = `<td><select class="p"><option value="0">None</option><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option></select></td>
+            <td><input class="r" placeholder="Reg No"></td><td><input class="n" placeholder="Name"></td>
+            <td><select class="g"><option>ARTEZUELA</option><option>UGRAN</option><option>COSMIC</option><option>SPARKERS</option></select></td>
+            <td><select class="gr"><option value="">Nil</option><option>A+</option><option>A</option><option>B</option><option>C</option></select></td>
+            <td><button class="btn" style="background:#e74c3c; padding:5px 10px;" onclick="this.parentElement.parentElement.remove()">×</button></td>`;
     }
 
     function searchStu() {
-        let q = document.getElementById("stuSearch").value.toLowerCase().trim();
+        let q = document.getElementById("stuSearch").value.trim();
         if(!q) return;
-        let found = false, total = 0, items = [], sName="";
+        let found = false, total = 0, name = "", html = "<tr><th>Event</th><th>Pos</th><th>Grade</th><th>Pts</th></tr>";
         events.forEach(e => e.items.forEach(it => {
-            if(it.reg.toLowerCase() === q) {
-                if(!found) { sName=it.name; found=true; }
-                items.push({ ev: e.name, p: it.pos, g: it.grade, pts: it.pts });
-                total += it.pts;
+            if(it.reg == q) {
+                found = true; name = it.name; total += parseInt(it.pts);
+                html += `<tr><td>${e.name}</td><td>${it.pos==0?'-':it.pos}</td><td>${it.grade}</td><td>${it.pts}</td></tr>`;
             }
         }));
         if(found) {
             document.getElementById("stuCard").style.display = "block";
-            document.getElementById("sNameDisplay").innerText = sName.toUpperCase();
-            document.getElementById("sPointDisplay").innerText = `TOTAL: ${total}`;
-            let st = document.getElementById("sResTable"); st.innerHTML = "<tr><th>Event</th><th>Pos</th><th>Grade</th><th>Pts</th></tr>";
-            items.forEach(i => st.innerHTML += `<tr><td>${i.ev}</td><td>${i.p==0?'--':i.p}</td><td>${i.g}</td><td>${i.pts}</td></tr>`);
-        } else { alert("Not found"); }
+            document.getElementById("sNameDisplay").innerText = name.toUpperCase();
+            document.getElementById("sPointDisplay").innerText = "TOTAL POINTS: " + total;
+            document.getElementById("sResTable").innerHTML = html;
+        } else { alert("Student Registration Number not found."); }
     }
 
-    function viewEvent(i) {
-        const e = events[i]; document.getElementById("viewTitle").innerText = e.name.toUpperCase();
-        let vt = document.getElementById("viewTable"); vt.innerHTML = "<thead><tr><th>Pos</th><th>Reg</th><th>Name</th><th>Group</th><th>Grade</th><th>Pts</th></tr></thead><tbody>";
-        e.items.forEach(it => vt.innerHTML += `<tr><td>${it.pos==0?'--':it.pos}</td><td>${it.reg}</td><td>${it.name}</td><td>${it.group}</td><td>${it.grade}</td><td>${it.pts}</td></tr>`);
-        showPage('viewPage');
-    }
-
-    function restoreToEntry(i) {
-        const e = events[i];
-        document.getElementById("eventName").value = e.name;
-        document.getElementById("eventType").value = e.type;
-        document.getElementById("editIndex").value = i;
-        document.getElementById("entryBody").innerHTML = "";
-        document.getElementById("formTitle").innerText = "Edit: " + e.name;
-        e.items.forEach(it => addRow(it));
-        showPage('home');
-    }
-
-    function delEvent(i) { if(confirm("Delete?")) { events.splice(i,1); localStorage.setItem("arts_fest_data", JSON.stringify(events)); render(); } }
-    function clearAllData() { if(confirm("Clear All?")) { localStorage.clear(); location.reload(); } }
+    function resetForm() { document.getElementById("eventName").value = ""; document.getElementById("entryBody").innerHTML = ""; addRow(); }
     function showPage(p) { document.querySelectorAll(".page").forEach(x => x.classList.remove("active")); document.getElementById(p).classList.add("active"); }
-    function resetForm() { document.getElementById("editIndex").value = "-1"; document.getElementById("eventName").value = ""; document.getElementById("entryBody").innerHTML = ""; for(let i=0; i<3; i++) addRow(); }
-    function preparePrint(t) { document.getElementById("docTitle").innerText = t; window.print(); }
 
-    window.onload = () => { resetForm(); render(); };
+    window.onload = () => { resetForm(); syncFromCloud(); };
 </script>
 </body>
-
 </html>
