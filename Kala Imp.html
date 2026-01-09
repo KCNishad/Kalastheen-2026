@@ -86,7 +86,8 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbytO5Lcz77zlissP51EjzsFS6g70yxlF_MD6qDfEnilePxYvEhSovugEmK0tvUbf9gW/exec"; 
+    // Ensure this URL is the latest one from "Deploy > New Deployment" as "Anyone"
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUIKukVOt7TD2WwtYTZIQaCyoDJ29uegZrRqeQXBlLJKIr3MwoaLPe-3d5AnwDp6bv/exec"; 
     const ADMIN_PASSWORD = "fest2026";
     
     let isAdmin = false;
@@ -122,39 +123,44 @@
         const status = document.getElementById("syncStatus");
         status.innerHTML = "⌛ Syncing with Cloud...";
         try {
-            const res = await fetch(SCRIPT_URL);
-            const data = await res.json();
+            // Adding a timestamp ensures the browser doesn't cache the old "Failed" response
+            const response = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
+            const data = await response.json();
+            
+            if (data.error) throw new Error(data.error);
+
             const grouped = {};
             data.forEach(row => {
-                if(!grouped[row.eventName]) grouped[row.eventName] = { name: row.eventName, type: row.type, items: [] };
-                grouped[row.eventName].items.push(row);
+                if(row.eventName) {
+                    if(!grouped[row.eventName]) grouped[row.eventName] = { name: row.eventName, type: row.type, items: [] };
+                    grouped[row.eventName].items.push(row);
+                }
             });
             events = Object.values(grouped);
             render();
             status.innerHTML = '<span class="live-dot"></span> LIVE FROM CLOUD';
         } catch (e) {
+            console.error("Sync Error:", e);
             status.innerHTML = "⚠️ Offline / Connection Failed";
         }
     }
 
     async function saveEvent() {
-        const name = document.getElementById("eventName").value;
+        const name = document.getElementById("eventName").value.trim();
         const type = document.getElementById("eventType").value;
         const saveBtn = document.getElementById("saveBtn");
         
         if(!name) return alert("Enter Event Name");
-        saveBtn.innerText = "⌛ UPLOADING...";
-        saveBtn.disabled = true;
-
-        let items = [];
+        
+        const items = [];
         document.querySelectorAll("#entryBody tr").forEach(tr => {
-            const reg = tr.querySelector(".r").value;
+            const reg = tr.querySelector(".r").value.trim();
             if(reg) {
                 const pos = tr.querySelector(".p").value;
                 const grade = tr.querySelector(".gr").value;
                 items.push({ 
                     eventName: name, type, pos, reg, 
-                    name: tr.querySelector(".n").value, 
+                    name: tr.querySelector(".n").value.trim(), 
                     group: tr.querySelector(".g").value, 
                     grade, 
                     pts: calc(type, pos, grade) 
@@ -162,14 +168,24 @@
             }
         });
 
+        if(items.length === 0) return alert("Add at least one person.");
+
+        saveBtn.innerText = "⌛ UPLOADING...";
+        saveBtn.disabled = true;
+
         try {
-            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ name, type, items }) });
-            alert("Results Published Successfully!");
+            await fetch(SCRIPT_URL, { 
+                method: 'POST', 
+                mode: 'no-cors', // Crucial for Google Apps Script POST
+                body: JSON.stringify({ name, type, items }) 
+            });
+            
+            alert("Results sent to Cloud! Please wait 2 seconds and refresh.");
             resetForm();
-            await syncFromCloud();
+            setTimeout(syncFromCloud, 2000);
             showPage('events');
         } catch (e) {
-            alert("Error: Data not saved. Check internet.");
+            alert("Error: Connection Failed.");
         } finally {
             saveBtn.innerText = "SAVE & PUBLISH TO CLOUD";
             saveBtn.disabled = false;
@@ -180,6 +196,10 @@
         const gal = document.getElementById("fullGallery"); gal.innerHTML = "";
         let groups = {"ARTEZUELA":0, "UGRAN":0, "COSMIC":0, "SPARKERS":0};
 
+        if (events.length === 0) {
+            gal.innerHTML = "<p style='text-align:center; color:#888;'>No results published yet.</p>";
+        }
+
         events.forEach((e) => {
             let tableHTML = `<div class="result-card">
                 <h4 style="color:var(--primary); margin-top:0;">${e.name.toUpperCase()} (${e.type})</h4>
@@ -187,7 +207,7 @@
                 <thead><tr><th>Pos</th><th>Name</th><th>Group</th><th>Grade</th><th>Pts</th></tr></thead><tbody>`;
             
             e.items.forEach(it => {
-                if(it.group && groups[it.group] !== undefined) groups[it.group] += parseInt(it.pts);
+                if(it.group && groups[it.group] !== undefined) groups[it.group] += (parseInt(it.pts) || 0);
                 tableHTML += `<tr><td>${it.pos == 0 ? '-' : it.pos}</td><td>${it.name}</td><td>${it.group}</td><td>${it.grade}</td><td>${it.pts}</td></tr>`;
             });
             gal.innerHTML += tableHTML + `</tbody></table></div></div>`;
@@ -214,7 +234,7 @@
         let found = false, total = 0, name = "", html = "<thead><tr><th>Event</th><th>Pos</th><th>Grade</th><th>Pts</th></tr></thead><tbody>";
         events.forEach(e => e.items.forEach(it => {
             if(it.reg == q) {
-                found = true; name = it.name; total += parseInt(it.pts);
+                found = true; name = it.name; total += (parseInt(it.pts) || 0);
                 html += `<tr><td>${e.name}</td><td>${it.pos == 0 ? '-' : it.pos}</td><td>${it.grade}</td><td>${it.pts}</td></tr>`;
             }
         }));
