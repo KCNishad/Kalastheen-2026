@@ -18,13 +18,14 @@
         table { width: 100%; border-collapse: collapse; min-width: 600px; }
         th { background: var(--primary); color: white; padding: 12px; font-size: 12px; }
         td { padding: 10px; text-align: center; border: 1px solid #eee; background: #fff; }
-        input, select { padding: 10px; width: 100%; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 5px; }
+        input, select { padding: 10px; width: 100%; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 5px; box-sizing: border-box; }
         .btn { border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; margin: 5px; transition: 0.3s; }
-        .result-card { border: 2px solid var(--primary); border-radius: 12px; padding: 15px; margin-top: 25px; }
+        .result-card { border: 2px solid var(--primary); border-radius: 12px; padding: 15px; margin-top: 25px; background: #fdfdfd; }
         .points-badge { background: var(--accent); color: #000; padding: 15px; font-size: 28px; font-weight: bold; text-align: center; border-radius: 8px; margin: 15px 0; }
         .status-indicator { font-size: 12px; text-align: center; margin-bottom: 10px; color: #666; font-weight: bold; }
         .live-dot { height: 10px; width: 10px; background-color: #27ae60; border-radius: 50%; display: inline-block; margin-right: 5px; animation: blink 1s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        .delete-btn { background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -45,7 +46,7 @@
     </nav>
 
     <div id="home" class="page">
-        <h3 id="formTitle">New Result Entry</h3>
+        <h3>Admin: New Result Entry</h3>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
             <input id="eventName" placeholder="Event Name">
             <select id="eventType"><option value="individual">Individual</option><option value="group">Group</option></select>
@@ -56,13 +57,13 @@
                 <tbody id="entryBody"></tbody>
             </table>
         </div>
-        <button class="btn" style="background:var(--success);" onclick="addRow()">+ Add Person</button>
+        <button class="btn" style="background:var(--success);" onclick="addRow()">+ Add Row</button>
         <button id="saveBtn" class="btn" style="background:var(--primary); width:100%; margin-top:20px;" onclick="saveEvent()">SAVE & PUBLISH TO CLOUD</button>
     </div>
 
     <div id="events" class="page active">
-        <h3>Registered Events</h3>
-        <div class="table-wrapper"><table><thead><tr><th>Event Name</th><th>Category</th><th>Details</th></tr></thead><tbody id="listBody"></tbody></table></div>
+        <h3>Live Event Results</h3>
+        <div id="fullGallery"></div>
     </div>
 
     <div id="groupTotal" class="page">
@@ -73,19 +74,19 @@
     <div id="studentReport" class="page">
         <h3>Individual Search</h3>
         <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <input id="stuSearch" placeholder="Reg Number..." style="max-width:300px;">
+            <input id="stuSearch" placeholder="Enter Registration Number..." style="flex:1;">
             <button class="btn" style="background:var(--primary);" onclick="searchStu()">SEARCH</button>
         </div>
         <div id="stuCard" style="display:none;" class="result-card">
             <h2 id="sNameDisplay" style="text-align:center;"></h2>
             <div id="sPointDisplay" class="points-badge"></div>
-            <table id="sResTable" style="width:100%"></table>
+            <div class="table-wrapper"><table id="sResTable"></table></div>
         </div>
     </div>
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzCNkwEfuqRTzIKt2nR-rd2Vu6BvDJYwNRD_KP_IJ9kVIO-xv1mJHf8EPARVVboOa3W/exec"; 
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbytO5Lcz77zlissP51EjzsFS6g70yxlF_MD6qDfEnilePxYvEhSovugEmK0tvUbf9gW/exec"; 
     const ADMIN_PASSWORD = "fest2026";
     
     let isAdmin = false;
@@ -95,6 +96,7 @@
         if(!isAdmin) {
             let p = prompt("Enter Admin Password:");
             if(p === ADMIN_PASSWORD) { isAdmin = true; updateAuthUI(); }
+            else { alert("Wrong Password"); }
         } else { isAdmin = false; updateAuthUI(); }
     }
 
@@ -118,7 +120,7 @@
 
     async function syncFromCloud() {
         const status = document.getElementById("syncStatus");
-        status.innerHTML = "⌛ Fetching live scores...";
+        status.innerHTML = "⌛ Syncing with Cloud...";
         try {
             const res = await fetch(SCRIPT_URL);
             const data = await res.json();
@@ -131,7 +133,7 @@
             render();
             status.innerHTML = '<span class="live-dot"></span> LIVE FROM CLOUD';
         } catch (e) {
-            status.innerHTML = "⚠️ Offline / No Data";
+            status.innerHTML = "⚠️ Offline / Connection Failed";
         }
     }
 
@@ -141,7 +143,6 @@
         const saveBtn = document.getElementById("saveBtn");
         
         if(!name) return alert("Enter Event Name");
-        
         saveBtn.innerText = "⌛ UPLOADING...";
         saveBtn.disabled = true;
 
@@ -149,23 +150,26 @@
         document.querySelectorAll("#entryBody tr").forEach(tr => {
             const reg = tr.querySelector(".r").value;
             if(reg) {
+                const pos = tr.querySelector(".p").value;
+                const grade = tr.querySelector(".gr").value;
                 items.push({ 
-                    pos: tr.querySelector(".p").value, reg, 
-                    name: tr.querySelector(".n").value, group: tr.querySelector(".g").value, 
-                    grade: tr.querySelector(".gr").value, 
-                    pts: calc(type, tr.querySelector(".p").value, tr.querySelector(".gr").value) 
+                    eventName: name, type, pos, reg, 
+                    name: tr.querySelector(".n").value, 
+                    group: tr.querySelector(".g").value, 
+                    grade, 
+                    pts: calc(type, pos, grade) 
                 });
             }
         });
 
         try {
             await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ name, type, items }) });
-            alert("Results Saved to Google Sheets!");
+            alert("Results Published Successfully!");
             resetForm();
-            syncFromCloud();
+            await syncFromCloud();
             showPage('events');
         } catch (e) {
-            alert("Sync Error. Check your internet connection.");
+            alert("Error: Data not saved. Check internet.");
         } finally {
             saveBtn.innerText = "SAVE & PUBLISH TO CLOUD";
             saveBtn.disabled = false;
@@ -173,12 +177,20 @@
     }
 
     function render() {
-        const lb = document.getElementById("listBody"); lb.innerHTML = "";
+        const gal = document.getElementById("fullGallery"); gal.innerHTML = "";
         let groups = {"ARTEZUELA":0, "UGRAN":0, "COSMIC":0, "SPARKERS":0};
 
         events.forEach((e) => {
-            lb.innerHTML += `<tr><td>${e.name}</td><td>${e.type}</td><td><button class="btn" style="background:#3498db" onclick="showPage('studentReport')">Details</button></td></tr>`;
-            e.items.forEach(it => { if(it.group && groups[it.group] !== undefined) groups[it.group] += parseInt(it.pts); });
+            let tableHTML = `<div class="result-card">
+                <h4 style="color:var(--primary); margin-top:0;">${e.name.toUpperCase()} (${e.type})</h4>
+                <div class="table-wrapper"><table>
+                <thead><tr><th>Pos</th><th>Name</th><th>Group</th><th>Grade</th><th>Pts</th></tr></thead><tbody>`;
+            
+            e.items.forEach(it => {
+                if(it.group && groups[it.group] !== undefined) groups[it.group] += parseInt(it.pts);
+                tableHTML += `<tr><td>${it.pos == 0 ? '-' : it.pos}</td><td>${it.name}</td><td>${it.group}</td><td>${it.grade}</td><td>${it.pts}</td></tr>`;
+            });
+            gal.innerHTML += tableHTML + `</tbody></table></div></div>`;
         });
 
         const gt = document.getElementById("gtTable"); gt.innerHTML = "<tr><th>Rank</th><th>Group</th><th>Points</th></tr>";
@@ -190,31 +202,31 @@
     function addRow() {
         const b = document.getElementById("entryBody");
         const r = b.insertRow();
-        r.innerHTML = `<td><select class="p"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></td>
+        r.innerHTML = `<td><select class="p"><option value="0">None</option><option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option></select></td>
             <td><input class="r" placeholder="Reg No"></td><td><input class="n" placeholder="Name"></td>
             <td><select class="g"><option>ARTEZUELA</option><option>UGRAN</option><option>COSMIC</option><option>SPARKERS</option></select></td>
             <td><select class="gr"><option>A+</option><option>A</option><option>B</option><option>C</option></select></td>
-            <td><button onclick="this.parentElement.parentElement.remove()">×</button></td>`;
+            <td><button class="delete-btn" onclick="this.parentElement.parentElement.remove()">×</button></td>`;
     }
 
     function searchStu() {
         let q = document.getElementById("stuSearch").value.trim();
-        let found = false, total = 0, name = "", html = "<tr><th>Event</th><th>Pts</th></tr>";
+        let found = false, total = 0, name = "", html = "<thead><tr><th>Event</th><th>Pos</th><th>Grade</th><th>Pts</th></tr></thead><tbody>";
         events.forEach(e => e.items.forEach(it => {
             if(it.reg == q) {
                 found = true; name = it.name; total += parseInt(it.pts);
-                html += `<tr><td>${e.name}</td><td>${it.pts}</td></tr>`;
+                html += `<tr><td>${e.name}</td><td>${it.pos == 0 ? '-' : it.pos}</td><td>${it.grade}</td><td>${it.pts}</td></tr>`;
             }
         }));
         if(found) {
             document.getElementById("stuCard").style.display = "block";
             document.getElementById("sNameDisplay").innerText = name.toUpperCase();
-            document.getElementById("sPointDisplay").innerText = "TOTAL: " + total;
-            document.getElementById("sResTable").innerHTML = html;
+            document.getElementById("sPointDisplay").innerText = "TOTAL POINTS: " + total;
+            document.getElementById("sResTable").innerHTML = html + "</tbody>";
         } else { alert("Student ID not found."); }
     }
 
-    function resetForm() { document.getElementById("eventName").value = ""; document.getElementById("entryBody").innerHTML = ""; addRow(); }
+    function resetForm() { document.getElementById("eventName").value = ""; document.getElementById("entryBody").innerHTML = ""; for(let i=0; i<3; i++) addRow(); }
     function showPage(p) { document.querySelectorAll(".page").forEach(x => x.classList.remove("active")); document.getElementById(p).classList.add("active"); }
 
     window.onload = () => { resetForm(); syncFromCloud(); };
